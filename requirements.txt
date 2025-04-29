@@ -1,0 +1,6 @@
+# fundamental_analyzer/requirements.txt
+pandas
+numpy
+yfinance
+matplotlib
+openpyxl # Required by pandas for Excel exports
