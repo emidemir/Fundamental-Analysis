@@ -1,89 +1,67 @@
-# fundamental_analyzer/main.py
+# fundamental_analyzer_pro/main.py
 
 import sys
-from .analyzer import StockAnalyzer
+import traceback
+import os
 
-def run_analysis():
-    """ Main function to run the fundamental analysis tool. """
-    print("="*60)
-    print(" Simple Stock Fundamental Analysis Tool")
-    print("="*60)
+# --- Path Setup (Optional but can help in some execution environments) ---
+# If running `python main.py` directly from the project root, this helps ensure
+# modules within the 'fundamental_analyzer_pro' package are found.
+# If running with `python -m fundamental_analyzer_pro.main`, this is usually not needed.
+project_root = os.path.dirname(os.path.abspath(__file__))
+if project_root not in sys.path:
+    # print(f"Adding project root to sys.path: {project_root}") # Uncomment for debug
+    sys.path.insert(0, project_root)
+# --------------------------------------------------------------------------
 
-    while True:
-        ticker = input("Enter the stock ticker symbol (e.g., AAPL, MSFT) or 'quit' to exit: ").strip().upper()
-        if ticker == 'QUIT':
-            break
-        if not ticker:
-            print("Ticker symbol cannot be empty.")
-            continue
 
-        try:
-             # Hardcoding years for simplicity, yfinance often limits this anyway for statements
-             years = 5
-             print(f"Analyzing {ticker} for the last available financial years (up to {years})...")
+def start_application():
+    """
+    Initializes and starts the command-line interface for the application.
+    Handles top-level exceptions and import errors.
+    """
+    try:
+        # Attempt to import the primary interface module
+        # Use absolute import assuming 'fundamental_analyzer_pro' is the package name
+        from fundamental_analyzer_pro.interfaces import cli
+        print("Initializing Fundamental Analysis Tool...")
 
-             analyzer = StockAnalyzer(ticker, years)
+        # Run the main loop/function of the command-line interface
+        cli.run_cli()
 
-             # 1. Fetch Data
-             if not analyzer.fetch_data():
-                  print(f"Failed to fetch data for {ticker}. Please check the ticker symbol.")
-                  continue # Ask for a new ticker
+        print("\nFundamental Analysis Tool execution finished normally.")
 
-             # 2. Calculate Metrics
-             if not analyzer.calculate_metrics():
-                  print(f"Failed to calculate metrics for {ticker}. Analysis may be incomplete.")
-                  # Decide if you want to continue or stop
-                  # continue
+    except ImportError as e:
+        print(f"\nFATAL ERROR: Could not import required application modules.", file=sys.stderr)
+        print(f"Import Error Details: {e}", file=sys.stderr)
+        print("\nPlease ensure:", file=sys.stderr)
+        print("  1. You are running this from the correct directory.", file=sys.stderr)
+        print("  2. The project structure is intact (e.g., 'interfaces/cli.py' exists).", file=sys.stderr)
+        print("  3. Dependencies are installed (`pip install -r requirements.txt`).", file=sys.stderr)
+        print("  4. Consider running using `python -m fundamental_analyzer_pro.main` from the directory *containing* 'fundamental_analyzer_pro'.", file=sys.stderr)
+        sys.exit(1) # Exit with an error code
 
-             # 3. Perform Scoring
-             analyzer.perform_scoring()
+    except KeyboardInterrupt:
+        # Handle Ctrl+C gracefully at the top level
+        print("\n\nOperation cancelled by user (Ctrl+C). Exiting.", file=sys.stderr)
+        sys.exit(0) # Exit cleanly
 
-             # 4. Display Summary
-             analyzer.display_summary()
+    except Exception as e:
+        # Catch any other unexpected exceptions that weren't handled deeper down
+        print(f"\nFATAL UNHANDLED ERROR encountered:", file=sys.stderr)
+        print(f"Error Type: {type(e).__name__}", file=sys.stderr)
+        print(f"Error Details: {e}", file=sys.stderr)
+        print("\n--- Traceback ---", file=sys.stderr)
+        # Print the full traceback to stderr for debugging
+        traceback.print_exc(file=sys.stderr)
+        print("--- End Traceback ---", file=sys.stderr)
+        sys.exit(1) # Exit with an error code
 
-             # 5. Visualization (Optional)
-             show_plots = input("Do you want to see historical trend plots? (y/n): ").strip().lower()
-             if show_plots == 'y':
-                  analyzer.plot_trends()
 
-             # 6. Export (Optional)
-             export_file = input("Do you want to export the results to Excel? (y/n): ").strip().lower()
-             if export_file == 'y':
-                  default_filename = f"{ticker}_fundamental_analysis.xlsx"
-                  filename = input(f"Enter filename for export (default: {default_filename}): ").strip()
-                  if not filename:
-                       filename = default_filename
-                  analyzer.export_to_excel(filename)
-
-        except KeyboardInterrupt:
-            print("\nAnalysis interrupted by user.")
-            break
-        except Exception as e:
-            print(f"\nAn unexpected error occurred during analysis for {ticker}:")
-            print(f"Error Type: {type(e).__name__}")
-            print(f"Error Details: {e}")
-            # Optionally add more detailed traceback logging here for debugging
-            # import traceback
-            # traceback.print_exc()
-            print("Please try again or enter a different ticker.")
-
-        print("\n" + "-"*60) # Separator for next analysis
-
-    print("\nExiting Fundamental Analysis Tool. Goodbye!")
-
+# --- Standard Python Entry Point ---
 if __name__ == "__main__":
-    # This allows running the script directly
-    # Add the parent directory to sys.path if running main.py directly for imports to work
-    import os
-    if __package__ is None:
-          # If running as a script, adjust path to allow relative imports
-          file_dir = os.path.dirname(os.path.abspath(__file__))
-          parent_dir = os.path.dirname(file_dir)
-          if parent_dir not in sys.path:
-              sys.path.insert(0, parent_dir)
-          # Now re-import using package context if necessary, or just run
-          # from fundamental_analyzer.analyzer import StockAnalyzer # Example re-import
-          run_analysis()
-    else:
-          # If imported as a module (e.g. python -m fundamental_analyzer.main)
-          run_analysis()
+    """
+    This block executes only when the script is run directly
+    (e.g., `python main.py` or `python -m fundamental_analyzer_pro.main`).
+    """
+    start_application()

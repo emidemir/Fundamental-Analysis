@@ -4,3 +4,4 @@ numpy
 yfinance
 matplotlib
 openpyxl # Required by pandas for Excel exports
+unittest
